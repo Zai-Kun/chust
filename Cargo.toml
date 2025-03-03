@@ -7,14 +7,16 @@ edition = "2021"
 ab_glyph = "0.2.29"
 anyhow = "1.0.96"
 clap = { version = "4.5.30", features = ["derive"] }
-image = "0.25.5"
 imageproc = "0.25.0"
 ndarray = "0.16.1"
 ort = { version = "2.0.0-rc.9", features = ["download-binaries"] }
 
-[profile.release]
-opt-level = "z"      # Optimize for size over speed
-lto = true           # Enable Link Time Optimization (LTO)
-panic = "abort"      # Remove unwinding code to reduce binary size
-strip = true         # Remove debug symbols
-codegen-units = 1    # Improve optimization by compiling as a single unit
+# [profile.release]
+# opt-level = "z"      # Optimize for size over speed
+# lto = true           # Enable Link Time Optimization (LTO)
+# panic = "abort"      # Remove unwinding code to reduce binary size
+# strip = true         # Remove debug symbols
+# codegen-units = 1    # Improve optimization by compiling as a single unit
+
+[features]
+embed_model = []

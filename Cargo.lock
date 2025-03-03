@@ -250,7 +250,6 @@ dependencies = [
  "ab_glyph",
  "anyhow",
  "clap",
- "image",
  "imageproc",
  "ndarray",
  "ort",

@@ -50,13 +50,17 @@ pub struct Args {
     pub refined_padding: f32,
 
     /// Do not exit after processing an image; continuously wait for additional images from the input pipe.
-    /// This option is ignored if a file path is provided (default: false).
+    /// This option is ignored if a file path is not "-" (default: false).
     #[arg(long, default_value_t = false)]
     pub dont_exit: bool,
 
-    /// If specified, the tool will annotate the original image with all detections and save it at the given path.
+    /// If specified, the tool will annotate the original image with all detections and save it at the given path. You can also give it "-" to write to the output pipe.
     #[arg(long)]
     pub output_path: Option<String>,
+
+    /// Path to the onnx model file for chessboard detection (default: "chess_detection.onnx").
+    #[arg(long, default_value_t = String::from("chess_detection.onnx"))]
+    pub model_path: String,
 }
 
 /// Represents the point of view (POV) for chessboard detection.

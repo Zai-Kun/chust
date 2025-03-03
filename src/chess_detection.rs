@@ -1,4 +1,4 @@
-use image::{imageops, imageops::FilterType, DynamicImage, GenericImageView, Rgba, RgbaImage};
+use imageproc::image::{imageops, imageops::FilterType, DynamicImage, GenericImageView, Rgb, RgbImage};
 use ndarray::{Array, ArrayBase, Axis, Ix4, IxDyn, OwnedRepr};
 use ort::inputs;
 use ort::session::Session;
@@ -68,7 +68,7 @@ impl ChessDetection {
     pub fn detect(
         &self,
         img: &DynamicImage,
-        detection_level: DetectionLevel,
+        detection_level: &DetectionLevel,
     ) -> ort::Result<Option<ArrayBase<OwnedRepr<f32>, IxDyn>>> {
         let (input, x_offset, y_offset, scale) = process_image(img);
         let mut output = self.predict(input)?;
@@ -90,7 +90,7 @@ impl ChessDetection {
             );
             let (cropped_img, new_x, new_y) =
                 crop_with_padding(img, x, y, w, h, self.refined_padding);
-            output = match self.detect(&cropped_img, DetectionLevel::Basic)? {
+            output = match self.detect(&cropped_img, &DetectionLevel::Basic)? {
                 Some(out) => out,
                 None => return Ok(None),
             };
@@ -206,7 +206,7 @@ pub fn process_image(img: &DynamicImage) -> (ArrayBase<OwnedRepr<f32>, Ix4>, u32
     let (padded_img, x_offset, y_offset, scale) = letterbox_resize(img, 640);
     let mut input = Array::zeros((1, 3, 640, 640));
     for (x, y, pixel) in padded_img.enumerate_pixels() {
-        let Rgba([r, g, b, _]) = *pixel;
+        let Rgb([r, g, b]) = *pixel;
         input[[0, 0, y as usize, x as usize]] = (r as f32) / 255.;
         input[[0, 1, y as usize, x as usize]] = (g as f32) / 255.;
         input[[0, 2, y as usize, x as usize]] = (b as f32) / 255.;
@@ -214,19 +214,29 @@ pub fn process_image(img: &DynamicImage) -> (ArrayBase<OwnedRepr<f32>, Ix4>, u32
     (input, x_offset, y_offset, scale)
 }
 
-pub fn letterbox_resize(img: &DynamicImage, target_size: u32) -> (RgbaImage, u32, u32, f32) {
+pub fn letterbox_resize(img: &DynamicImage, target_size: u32) -> (RgbImage, u32, u32, f32) {
     let (orig_w, orig_h) = img.dimensions();
-    let scale = (target_size as f32 / orig_w.max(orig_h) as f32).min(1.0);
+
+    // Ensure at least one side is 640 while maintaining aspect ratio
+    let scale = if orig_w > orig_h {
+        target_size as f32 / orig_w as f32
+    } else {
+        target_size as f32 / orig_h as f32
+    };
 
     let new_w = (orig_w as f32 * scale) as u32;
     let new_h = (orig_h as f32 * scale) as u32;
 
-    let resized = img.resize_exact(new_w, new_h, FilterType::Triangle);
+    let resized = img
+        .resize_exact(new_w, new_h, FilterType::Lanczos3)
+        .to_rgb8();
 
-    let mut padded = RgbaImage::new(target_size, target_size);
+    // Calculate padding offsets to center the image
     let x_offset = (target_size - new_w) / 2;
     let y_offset = (target_size - new_h) / 2;
 
+    // Create a new black-padded square image
+    let mut padded = RgbImage::new(target_size, target_size);
     imageops::overlay(&mut padded, &resized, x_offset.into(), y_offset.into());
     (padded, x_offset, y_offset, scale)
 }
