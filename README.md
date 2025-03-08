@@ -2,6 +2,12 @@
 
 **Chust** is a Rust-based tool that leverages machine learning to detect chessboards and pieces from images. It can extract Forsyth-Edwards Notation (FEN) from a chessboard image, mark detected pieces, and even play a game of chess for you as a bot.
 
+
+https://github.com/user-attachments/assets/05ea390d-cef0-47d6-ab40-e832f84fa61c
+
+![screenshot](https://github.com/user-attachments/assets/0cb00ed8-971e-48c8-a6a7-4158c866ccae)
+
+
 ## Features
 
 - **Bot Gameplay** - A chess bot; plays chess automatically for you.
