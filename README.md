@@ -19,7 +19,7 @@ https://github.com/user-attachments/assets/05ea390d-cef0-47d6-ab40-e832f84fa61c
 ## Installation
 
 ### Prebuilt Binaries
-You can find prebuilt binaries for Windows and Linux on the [Releases](https://github.com/Zai-Kun/chust/releases) page. For macOS and other platforms, you will need to compile Chust manually.
+You can find prebuilt binaries for Windows (thanks to [@SenZmaKi](https://github.com/SenZmaKi)) and Linux on the [Releases](https://github.com/Zai-Kun/chust/releases) page. For macOS and other platforms, you will need to compile Chust manually.
 
 ### Compiling from Source
 Ensure you have Rust and Cargo installed. On Windows, you also need [Visual Studio 2022 (≥ 17.11)](https://visualstudio.microsoft.com/) installed.
