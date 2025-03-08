@@ -24,7 +24,7 @@ pub fn draw_label(img: &mut DynamicImage, bbox: (u32, u32, u32, u32), class_id: 
     let label = class_names.get(class_id as usize).unwrap_or(&"??");
     let (x, y, width, height) = bbox;
 
-    let font_data = include_bytes!("/usr/share/fonts/TTF/CaskaydiaCoveNerdFont-Bold.ttf");
+    let font_data = include_bytes!("../CaskaydiaCoveNerdFont-Bold.ttf");
     let font = FontArc::try_from_slice(font_data).expect("Failed to load font");
 
     let text_x = x + (width / 2) - (label.len() as u32 * 15 / 2);

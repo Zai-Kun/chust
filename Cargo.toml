@@ -7,9 +7,17 @@ edition = "2021"
 ab_glyph = "0.2.29"
 anyhow = "1.0.96"
 clap = { version = "4.5.30", features = ["derive"] }
+enigo = "0.3.0"
 imageproc = "0.25.0"
 ndarray = "0.16.1"
+xcap = "0.4.0"
 ort = { version = "2.0.0-rc.9", features = ["download-binaries"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+wayland-client = "0.31.7"
+wayland-protocols = { version = "0.32.5", features = ["client"] }
+wayland-protocols-wlr = { version = "0.3.5", features = ["client"] }
+nix = { version = "0.29.0", features = ["fs", "mman"], default-features = false }
 
 # [profile.release]
 # opt-level = "z"      # Optimize for size over speed
@@ -19,4 +27,4 @@ ort = { version = "2.0.0-rc.9", features = ["download-binaries"] }
 # codegen-units = 1    # Improve optimization by compiling as a single unit
 
 [features]
-embed_model = []
+embed_model = [] # Enable to embed the model in the binary itself

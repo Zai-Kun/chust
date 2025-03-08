@@ -129,7 +129,7 @@ impl ChessDetection {
             let x_location = ((x - board_cords.0 as f32) / cell_size as f32).ceil() as usize;
             let y_location = ((y - board_cords.1 as f32) / cell_size as f32).ceil() as usize;
 
-            if x_location > 8 || y_location > 8 {
+            if x_location > 8 || x_location < 1 || y_location > 8 || y_location < 1 {
                 continue;
             }
 
