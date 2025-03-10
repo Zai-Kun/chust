@@ -244,11 +244,15 @@ pub fn create_input_capture(
         )?));
     }
 
-    let input_capture: Box<dyn InputCaptureTrait> = if cfg!(target_os = "linux") && on_wayland() {
+    #[cfg(target_os = "linux")]
+    let input_capture: Box<dyn InputCaptureTrait> = if on_wayland() {
         Box::new(InputCaptureWayland::new(output_index)?)
     } else {
         Box::new(InputCapture::new(output_index)?)
     };
+
+    #[cfg(not(target_os = "linux"))]
+    let input_capture: Box<dyn InputCaptureTrait> = Box::new(InputCapture::new(output_index)?);
 
     if custom_screenshot_command.is_some() || custom_click_command.is_some() {
         Ok(Box::new(CustomInputCapture::new(
