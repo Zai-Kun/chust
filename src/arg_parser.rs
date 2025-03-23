@@ -111,7 +111,7 @@ pub enum Commands {
         stockfish_depth: u32,
 
         /// Ensures board stability before confirming a move by rechecking after detecting a change.
-        /// When a new position is detected, we wait briefly and verify that the board state remains consistent 
+        /// When a new position is detected, we wait briefly and verify that the board state remains consistent
         /// before proceeding. This helps prevent false positives caused by animations, lag, or partial updates.
         ///
         /// If disabled, Chust may react more quickly but at the risk of misinterpreting temporary visual changes.
@@ -119,6 +119,12 @@ pub enum Commands {
         /// Default: false.
         #[arg(long, default_value_t = false)]
         recheck_after_change: bool,
+
+        /// Specifies the delay (in seconds) between selecting a piece and clicking its destination.
+        /// This simulates a more human-like interaction with the board.
+        /// Default: 0.1 seconds.
+        #[arg(long, default_value_t = 0.1)]
+        move_delay: f32,
     },
 }
 

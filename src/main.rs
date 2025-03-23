@@ -26,7 +26,8 @@ fn main() -> Result<()> {
             screenshot_delay,
             ref stockfish_path,
             stockfish_depth,
-            recheck_after_change
+            recheck_after_change,
+            move_delay
         } => {
             let input_capture = input_capture::input_capture_manager::create_input_capture(
                 0,
@@ -40,6 +41,7 @@ fn main() -> Result<()> {
                 stockfish_depth,
                 stockfish,
                 recheck_after_change,
+                move_delay,
                 &args,
                 &chess_detector,
                 input_capture,

@@ -13,6 +13,7 @@ pub fn play(
     stockfish_depth: u32,
     mut stockfish: Stockfish,
     recheck_after_change: bool,
+    move_delay: f32,
     args: &Args,
     chess_detector: &ChessDetection,
     mut input_capture: Box<dyn InputCaptureTrait>,
@@ -66,6 +67,7 @@ pub fn play(
             is_white_pov,
             &mut input_capture,
         )?;
+        std::thread::sleep(std::time::Duration::from_secs_f32(move_delay));
         click_notation(
             board_cords,
             tile_size,
