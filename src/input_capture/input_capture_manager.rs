@@ -41,6 +41,10 @@ impl InputCapture {
 }
 
 impl InputCaptureTrait for InputCapture {
+    fn drag(&mut self, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<()> {
+        Ok(())
+    }
+
     fn screenshot(&mut self) -> Result<DynamicImage> {
         Ok(DynamicImage::ImageRgba8(self.monitor.capture_image()?))
     }
@@ -113,6 +117,10 @@ impl InputCaptureTrait for InputCaptureWayland {
 
         Ok(())
     }
+
+    fn drag(&mut self, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<()> {
+        Ok(())
+    }
 }
 
 pub struct CustomInputCapture {
@@ -169,6 +177,9 @@ impl CustomInputCapture {
 }
 
 impl InputCaptureTrait for CustomInputCapture {
+    fn drag(&mut self, x1: u32, y1: u32, x2: u32, y2: u32) -> Result<()> {
+        Ok(())
+    }
     fn screenshot(&mut self) -> Result<DynamicImage> {
         if let Some(ss_command) = &self.custom_screenshot_command {
             let output = Self::execute_command(ss_command, true)?
