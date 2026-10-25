@@ -9,7 +9,7 @@ anyhow = "1.0.96"
 clap = { version = "4.5.30", features = ["derive"] }
 enigo = "0.3.0"
 imageproc = "0.25.0"
-ndarray = "0.16.1"
+ndarray = "0.17.2"
 xcap = "0.4.0"
 ort = { version = "2.0.0-rc.9", features = ["download-binaries"] }
 

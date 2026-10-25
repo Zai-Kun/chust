@@ -5,7 +5,6 @@ mod input_capture;
 mod play;
 mod process;
 mod stockfish;
-
 use anyhow::{Context, Result};
 use arg_parser::Args;
 use chess_detection::ChessDetection;
@@ -17,7 +16,7 @@ use stockfish::Stockfish;
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let chess_detector = initialize_chess_detector(&args)?;
+    let mut chess_detector = initialize_chess_detector(&args)?;
 
     match args.command {
         arg_parser::Commands::Play {
@@ -43,7 +42,7 @@ fn main() -> Result<()> {
                 recheck_after_change,
                 move_delay,
                 &args,
-                &chess_detector,
+                &mut chess_detector,
                 input_capture,
             )?;
         }
@@ -64,7 +63,7 @@ fn main() -> Result<()> {
                 output_path.clone(),
                 dont_exit,
                 &args,
-                &chess_detector,
+                &mut chess_detector,
             )?;
         }
     }
@@ -72,22 +71,35 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+// Helper: converts any ort::Error<R> into an anyhow::Error via its Display impl,
+// sidestepping the fact that ort::Error<R> isn't Send + Sync (so `?` can't auto-convert it).
+fn ort_err<R>(e: ort::Error<R>) -> anyhow::Error {
+    anyhow::anyhow!(e.to_string())
+}
+
 fn initialize_chess_detector(args: &Args) -> Result<ChessDetection> {
     let model = if cfg!(feature = "embed_model") {
-        Session::builder()?
-            .with_optimization_level(GraphOptimizationLevel::Level3)?
-            .with_intra_threads(2)?
-            .commit_from_memory(include_bytes!("../chess_detection.onnx"))?
+        Session::builder()
+            .map_err(ort_err)?
+            .with_optimization_level(GraphOptimizationLevel::Level3)
+            .map_err(ort_err)?
+            .with_intra_threads(2)
+            .map_err(ort_err)?
+            .commit_from_memory(include_bytes!("../chess_detection.onnx"))
+            .map_err(ort_err)?
     } else {
-        Session::builder()?
-            .with_optimization_level(GraphOptimizationLevel::Level3)?
-            .with_intra_threads(2)?
+        Session::builder()
+            .map_err(ort_err)?
+            .with_optimization_level(GraphOptimizationLevel::Level3)
+            .map_err(ort_err)?
+            .with_intra_threads(2)
+            .map_err(ort_err)?
             .commit_from_file(&args.model_path)
+            .map_err(ort_err)
             .context(format!(
                 "Failed to load the model `{}`. Are you sure that the path is correct?",
                 args.model_path
             ))?
     };
-
     Ok(ChessDetection::new(model, args.conf, args.refined_padding))
 }

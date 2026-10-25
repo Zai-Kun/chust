@@ -15,7 +15,7 @@ pub fn play(
     recheck_after_change: bool,
     move_delay: f32,
     args: &Args,
-    chess_detector: &ChessDetection,
+    chess_detector: &mut ChessDetection,
     mut input_capture: Box<dyn InputCaptureTrait>,
 ) -> Result<()> {
     let detection_level = if args.refined_search {
@@ -90,7 +90,7 @@ fn wait_for_changes(
     detection_level: &DetectionLevel,
     is_white_pov: bool,
     input_capture: &mut Box<dyn InputCaptureTrait>,
-    chess_detector: &ChessDetection,
+    chess_detector: &mut ChessDetection,
     screenshot_delay: f32,
 
     mut recheck_after_change: bool,
@@ -120,7 +120,7 @@ fn wait_for_changes(
 
 fn take_screenshot_and_get_fen(
     input_capture: &mut Box<dyn InputCaptureTrait>,
-    chess_detector: &ChessDetection,
+    chess_detector: &mut ChessDetection,
     is_white_pov: bool,
     detection_level: &DetectionLevel,
 ) -> Result<(String, ArrayBase<OwnedRepr<f32>, IxDyn>)> {

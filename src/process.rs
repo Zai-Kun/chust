@@ -15,7 +15,7 @@ pub fn process(
     dont_exit: bool,
 
     args: &Args,
-    chess_detector: &ChessDetection,
+    chess_detector: &mut ChessDetection,
 ) -> Result<()> {
     if no_fen && output_path.is_none() && !print_detections {
         return Err(anyhow::anyhow!("No output requested."));

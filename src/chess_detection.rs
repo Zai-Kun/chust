@@ -1,13 +1,14 @@
 use imageproc::image::{imageops, imageops::FilterType, DynamicImage, GenericImageView, Rgb, RgbImage};
-use ndarray::{Array, ArrayBase, Axis, Ix4, IxDyn, OwnedRepr};
+use ndarray::{Array, ArrayBase, ArrayD, Axis, Ix4, IxDyn, OwnedRepr};
 use ort::inputs;
 use ort::session::Session;
+use ort::value::Value;
 
 pub static PIECE_MAP: [char; 12] = ['p', 'r', 'n', 'b', 'q', 'k', 'P', 'R', 'N', 'B', 'Q', 'K'];
 
 pub enum DetectionLevel {
-    Basic,   // Level 1: Detect the board and pieces directly
-    Refined, // Level 2: Crop & reprocess for better small-board detection
+    Basic,
+    Refined,
 }
 
 pub struct ChessDetection {
@@ -26,14 +27,22 @@ impl ChessDetection {
     }
 
     fn predict(
-        &self,
+        &mut self,
         input: ArrayBase<OwnedRepr<f32>, Ix4>,
     ) -> ort::Result<ArrayBase<OwnedRepr<f32>, IxDyn>> {
-        let outputs = self.session.run(inputs!["images" => input]?)?;
-        let output = outputs["output0"]
-            .try_extract_tensor::<f32>()?
-            .squeeze()
-            .into_owned();
+        let input_value = Value::from_array(input)?;
+        let outputs = &mut self.session.run(inputs!["images" => input_value])?;
+
+        let (shape, data) = outputs["output0"].try_extract_tensor::<f32>()?;
+
+        let squeezed_shape: Vec<usize> = shape
+            .iter()
+            .map(|&d| d as usize)
+            .filter(|&d| d != 1)
+            .collect();
+
+        let output = ArrayD::from_shape_vec(squeezed_shape, data.to_vec())
+            .expect("output0 tensor shape/data length mismatch after squeeze");
 
         Ok(output)
     }
@@ -66,7 +75,7 @@ impl ChessDetection {
     }
 
     pub fn detect(
-        &self,
+        &mut self,
         img: &DynamicImage,
         detection_level: &DetectionLevel,
     ) -> ort::Result<Option<ArrayBase<OwnedRepr<f32>, IxDyn>>> {
