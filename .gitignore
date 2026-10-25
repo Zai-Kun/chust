@@ -2,3 +2,4 @@
 *.onnx
 *.exe
 stockfish
+/screenshot
