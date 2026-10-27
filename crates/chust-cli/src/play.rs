@@ -1,10 +1,12 @@
 use crate::{
     arg_parser::Args,
-    chess_detection::{get_best_chessboard_match, ChessDetection, DetectionLevel},
     input_capture::InputCaptureTrait,
     stockfish::Stockfish,
 };
 use anyhow::{Context, Result};
+use chust_lib::{
+    get_best_chessboard_match, notation_to_positions, ChessDetection, DetectionLevel,
+};
 use ndarray::{ArrayBase, IxDyn, OwnedRepr};
 use std::io::{self, Read};
 
@@ -127,8 +129,7 @@ fn take_screenshot_and_get_fen(
     let screenshot = input_capture.screenshot()?;
     let detection = chess_detector
         .detect(&screenshot, &detection_level)
-        .context("Detection failed")?
-        .context("Board not found")?;
+        .context("Detection failed")?;
     let best_chessboard_match = get_best_chessboard_match(&detection)
         .context("Board not found")?
         .0;
@@ -158,36 +159,4 @@ fn click_notation(
         .context("Invalid notation")?;
     input_capture.click_at(x, y)?;
     Ok(())
-}
-
-fn notation_to_positions(
-    board_cords: (u32, u32),
-    tile_size: u32,
-    notation: &str,
-    is_white_pov: bool,
-) -> Option<(u32, u32)> {
-    if notation.len() != 2 {
-        return None;
-    }
-
-    let file = notation.chars().nth(0)?;
-    let rank = notation.chars().nth(1)?.to_digit(10)?;
-
-    if !('a'..='h').contains(&file) || !(1..=8).contains(&rank) {
-        return None;
-    }
-
-    let (board_start_x, board_start_y) = board_cords;
-    let file_index = (file as u8 - b'a') as u32;
-
-    let (file_pos, rank_pos) = if is_white_pov {
-        (file_index, 8 - rank)
-    } else {
-        ((7 - file_index), rank - 1)
-    };
-
-    let x = board_start_x + (tile_size / 2) + (tile_size * file_pos);
-    let y = board_start_y + (tile_size / 2) + (tile_size * rank_pos);
-
-    Some((x, y))
 }

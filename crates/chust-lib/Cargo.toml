@@ -1,0 +1,15 @@
+[package]
+name = "chust-lib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+thiserror.workspace = true
+imageproc.workspace = true
+ndarray.workspace = true
+ort.workspace = true
+ab_glyph.workspace = true
+
+[features]
+default = []
+embed_model = []

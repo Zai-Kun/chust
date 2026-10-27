@@ -10,7 +10,7 @@ pub struct Args {
 
     /// Specify the point of view for detection. Accepts "w" for white or "b" for black (default: w).
     /// This option is ignored if --no-fen is set to true AND if the input mode is standard input.
-    #[arg(global=true,long, value_enum, default_value_t = Pov::W)]
+    #[arg(global = true, long, value_enum, default_value_t = Pov::W)]
     pub pov: Pov,
 
     /// Enable refined search mode. This mode first detects the chessboard, crops the board with padding,
@@ -26,8 +26,8 @@ pub struct Args {
     #[arg(global = true, long, default_value_t = 0.1)]
     pub refined_padding: f32,
 
-    /// Path to the onnx model file for chessboard detection (default: "chess_detection.onnx").
-    #[arg(global = true, long, default_value = "chess_detection.onnx")]
+    /// Path to the onnx model file for chessboard detection (default: "assets/models/chess_detection.onnx").
+    #[arg(global = true, long, default_value = "assets/models/chess_detection.onnx")]
     pub model_path: String,
 
     /// Enables castling for white (default: false).
@@ -40,7 +40,7 @@ pub struct Args {
 }
 
 /// Represents the point of view (POV) for chessboard detection.
-#[derive(ValueEnum, Debug, Clone, PartialEq)]
+#[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Pov {
     /// White's point of view.
     W,

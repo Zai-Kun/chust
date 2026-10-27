@@ -1,0 +1,11 @@
+[package]
+name = "chust-mobile"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chust-lib = { path = "../chust-lib" }
+imageproc.workspace = true
+ndarray.workspace = true
+anyhow.workspace = true
+ort = { workspace = true, features = ["load-dynamic", "ndarray", "std"] }

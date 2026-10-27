@@ -1,7 +1,6 @@
 use crate::arg_parser::{Args, Pov};
-use crate::chess_detection::{get_best_chessboard_match, ChessDetection, DetectionLevel};
-use crate::drawing::annotate_detections;
 use anyhow::{Context, Result};
+use chust_lib::{annotate_detections, get_best_chessboard_match, ChessDetection, DetectionLevel};
 use imageproc::image::{self, DynamicImage};
 use ndarray::{ArrayBase, IxDyn, OwnedRepr};
 use std::io::{self, Cursor, Read, Write};
@@ -42,12 +41,11 @@ pub fn process(
 
         let detections = chess_detector
             .detect(&image, &detection_level)
-            .context("Detection failed")?
-            .context("Failed to find the chessboard")?;
+            .context("Detection failed")?;
 
         let detection_filter = process_detections_and_generate_filter(
-            &chess_detector,
-            &args,
+            chess_detector,
+            args,
             &detections,
             is_white_pov,
             no_fen,
@@ -56,7 +54,7 @@ pub fn process(
         )?;
 
         if let Some(output_path) = output_path.as_ref() {
-            annotate_detections(&mut image, &detections, &detection_filter);
+            annotate_detections(&mut image, &detections, &*detection_filter);
             save_image(&image, output_path)?;
         }
 
@@ -131,7 +129,7 @@ fn process_detections_and_generate_filter(
                 );
             }
         });
-        println!("");
+        println!();
     }
 
     Ok(detection_filter)

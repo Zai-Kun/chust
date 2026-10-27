@@ -1,0 +1,28 @@
+[package]
+name = "chust-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "chust"
+path = "src/main.rs"
+
+[dependencies]
+chust-lib = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+imageproc = { workspace = true }
+ndarray = { workspace = true }
+ort = { workspace = true }
+enigo = { workspace = true }
+xcap = { workspace = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+wayland-client = { workspace = true }
+wayland-protocols = { workspace = true }
+wayland-protocols-wlr = { workspace = true }
+nix = { workspace = true }
+
+[features]
+default = []
+embed_model = ["chust-lib/embed_model"]
