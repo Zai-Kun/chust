@@ -4,3 +4,4 @@
 stockfish
 /screenshot
 /crates/chust-wasm/pkg/
+crates/chust-wasm/ort/
