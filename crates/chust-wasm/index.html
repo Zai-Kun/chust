@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Chust WASM Test</title>
+  </head>
+  <body>
+    <h1>Chust WASM Test</h1>
+    <button id="run">Run detection</button>
+    <pre id="output">Ready</pre>
+
+    <script type="module">
+      import init, { detect_chess_board } from "./pkg/chust_wasm.js";
+
+      const output = document.querySelector("#output");
+      const button = document.querySelector("#run");
+
+      let initialized = false;
+
+      button.addEventListener("click", async () => {
+        try {
+          button.disabled = true;
+          output.textContent = "Initializing WASM...";
+
+          if (!initialized) {
+            await init();
+            initialized = true;
+          }
+
+          output.textContent = "Loading test.png...";
+          const imageResponse = await fetch("./test.png");
+
+          if (!imageResponse.ok) {
+            throw new Error(`Image request failed: ${imageResponse.status}`);
+          }
+
+          const imageBytes = new Uint8Array(
+            await imageResponse.arrayBuffer()
+          );
+
+          output.textContent = "Loading ONNX model...";
+          const response = await fetch("./chess_detection.onnx");
+
+          if (!response.ok) {
+            throw new Error(`Model request failed: ${response.status}`);
+          }
+
+          const modelBytes = new Uint8Array(
+            await response.arrayBuffer()
+          );
+
+          output.textContent = "Running inference...";
+          const fen = await detect_chess_board(imageBytes, modelBytes);
+
+          output.textContent = `Detected FEN: ${fen}`;
+        } catch (error) {
+          console.error("Chust WASM error:", error);
+          output.textContent = [
+            `Name: ${error?.name ?? "unknown"}`,
+            `Message: ${error?.message ?? String(error)}`,
+            `Stack: ${error?.stack ?? "unavailable"}`,
+          ].join("\n\n");
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

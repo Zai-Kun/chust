@@ -7,8 +7,11 @@ edition = "2021"
 thiserror.workspace = true
 imageproc.workspace = true
 ndarray.workspace = true
-ort.workspace = true
+ort = { workspace = true, features = ["std", "ndarray"] }
 ab_glyph.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+ort-web = "0.3.1"
 
 [features]
 default = []

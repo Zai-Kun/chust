@@ -1,12 +1,6 @@
-use crate::{
-    arg_parser::Args,
-    input_capture::InputCaptureTrait,
-    stockfish::Stockfish,
-};
+use crate::{arg_parser::Args, input_capture::InputCaptureTrait, stockfish::Stockfish};
 use anyhow::{Context, Result};
-use chust_lib::{
-    get_best_chessboard_match, notation_to_positions, ChessDetection, DetectionLevel,
-};
+use chust_lib::{get_best_chessboard_match, notation_to_positions, ChessDetection, DetectionLevel};
 use ndarray::{ArrayBase, IxDyn, OwnedRepr};
 use std::io::{self, Read};
 

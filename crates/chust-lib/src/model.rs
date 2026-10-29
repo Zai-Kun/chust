@@ -30,11 +30,8 @@ impl ChessDetection {
     }
 
     /// Load model from a file path on disk.
-    pub fn from_file(
-        path: &str,
-        confidence_threshold: f32,
-        refined_padding: f32,
-    ) -> Result<Self> {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn from_file(path: &str, confidence_threshold: f32, refined_padding: f32) -> Result<Self> {
         let session = Session::builder()
             .map_err(|e| ChustError::ModelLoad(format!("Builder init failed: {}", e)))?
             .with_optimization_level(GraphOptimizationLevel::Level3)
@@ -42,12 +39,15 @@ impl ChessDetection {
             .with_intra_threads(2)
             .map_err(|e| ChustError::ModelLoad(format!("Thread configuration error: {}", e)))?
             .commit_from_file(path)
-            .map_err(|e| ChustError::ModelLoad(format!("Failed to load ONNX model from `{}`: {}", path, e)))?;
+            .map_err(|e| {
+                ChustError::ModelLoad(format!("Failed to load ONNX model from `{}`: {}", path, e))
+            })?;
 
         Ok(Self::new(session, confidence_threshold, refined_padding))
     }
 
     /// Load model from in-memory byte slice.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn from_memory(
         bytes: &[u8],
         confidence_threshold: f32,
@@ -60,17 +60,49 @@ impl ChessDetection {
             .with_intra_threads(2)
             .map_err(|e| ChustError::ModelLoad(format!("Thread configuration error: {}", e)))?
             .commit_from_memory(bytes)
-            .map_err(|e| ChustError::ModelLoad(format!("Failed to initialize ONNX session from memory bytes: {}", e)))?;
+            .map_err(|e| {
+                ChustError::ModelLoad(format!(
+                    "Failed to initialize ONNX session from memory bytes: {}",
+                    e
+                ))
+            })?;
+
+        Ok(Self::new(session, confidence_threshold, refined_padding))
+    }
+
+    /// Load model from in-memory byte slice (WASM async).
+    #[cfg(target_arch = "wasm32")]
+    pub async fn from_memory(
+        bytes: &[u8],
+        confidence_threshold: f32,
+        refined_padding: f32,
+    ) -> Result<Self> {
+        ort::set_api(
+            ort_web::api(ort_web::FEATURE_WEBGPU)
+                .await
+                .map_err(|e| ChustError::ModelLoad(format!("Failed to initialize ORT: {e}")))?,
+        );
+        let session = Session::builder()
+            .map_err(|e| ChustError::ModelLoad(format!("Builder init failed: {}", e)))?
+            .with_optimization_level(GraphOptimizationLevel::Level3)
+            .map_err(|e| ChustError::ModelLoad(format!("Optimization level error: {}", e)))?
+            .with_intra_threads(2)
+            .map_err(|e| ChustError::ModelLoad(format!("Thread configuration error: {}", e)))?
+            .commit_from_memory(bytes)
+            .await
+            .map_err(|e| {
+                ChustError::ModelLoad(format!(
+                    "Failed to initialize ONNX session from memory bytes: {}",
+                    e
+                ))
+            })?;
 
         Ok(Self::new(session, confidence_threshold, refined_padding))
     }
 
     /// Load model embedded into the binary at compile time (requires `embed_model` feature).
-    #[cfg(feature = "embed_model")]
-    pub fn from_embedded(
-        confidence_threshold: f32,
-        refined_padding: f32,
-    ) -> Result<Self> {
+    #[cfg(all(feature = "embed_model", not(target_arch = "wasm32")))]
+    pub fn from_embedded(confidence_threshold: f32, refined_padding: f32) -> Result<Self> {
         Self::from_memory(
             include_bytes!("../../../assets/models/chess_detectionfp16.onnx"),
             confidence_threshold,
@@ -78,16 +110,69 @@ impl ChessDetection {
         )
     }
 
+    /// Load model embedded into the binary at compile time (requires `embed_model` feature, WASM async).
+    #[cfg(all(feature = "embed_model", target_arch = "wasm32"))]
+    pub async fn from_embedded(confidence_threshold: f32, refined_padding: f32) -> Result<Self> {
+        Self::from_memory(
+            include_bytes!("../../../assets/models/chess_detectionfp16.onnx"),
+            confidence_threshold,
+            refined_padding,
+        )
+        .await
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     fn predict(
         &mut self,
         input: ArrayBase<OwnedRepr<f32>, Ix4>,
     ) -> Result<ArrayBase<OwnedRepr<f32>, IxDyn>> {
-        let input_value = Value::from_array(input)
-            .map_err(|e| ChustError::InferenceFailed(format!("Failed to create input tensor value: {}", e)))?;
+        let input_value = Value::from_array(input).map_err(|e| {
+            ChustError::InferenceFailed(format!("Failed to create input tensor value: {}", e))
+        })?;
         let outputs = &mut self
             .session
             .run(inputs!["images" => input_value])
             .map_err(|e| ChustError::InferenceFailed(format!("Model session run failed: {}", e)))?;
+
+        let (shape, data) = outputs["output0"]
+            .try_extract_tensor::<f32>()
+            .map_err(|e| ChustError::TensorExtraction {
+                name: "output0",
+                reason: e.to_string(),
+            })?;
+
+        let squeezed_shape: Vec<usize> = shape
+            .iter()
+            .map(|&d| d as usize)
+            .filter(|&d| d != 1)
+            .collect();
+
+        let output = ArrayD::from_shape_vec(squeezed_shape, data.to_vec())
+            .map_err(|e| ChustError::TensorShapeMismatch(e.to_string()))?;
+
+        Ok(output)
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    async fn predict(
+        &mut self,
+        input: ArrayBase<OwnedRepr<f32>, Ix4>,
+    ) -> Result<ArrayBase<OwnedRepr<f32>, IxDyn>> {
+        let input_value = Value::from_array(input).map_err(|e| {
+            ChustError::InferenceFailed(format!("Failed to create input tensor value: {}", e))
+        })?;
+        let run_options = ort::session::RunOptions::new().map_err(|e| {
+            ChustError::InferenceFailed(format!("Failed to create run options: {}", e))
+        })?;
+        let mut outputs = &mut self
+            .session
+            .run_async(inputs!["images" => input_value], &run_options)
+            .await
+            .map_err(|e| ChustError::InferenceFailed(format!("Model session run failed: {}", e)))?;
+
+        ort_web::sync_outputs(&mut outputs)
+            .await
+            .map_err(|e| ChustError::InferenceFailed(format!("Failed to sync outputs: {}", e)))?;
 
         let (shape, data) = outputs["output0"]
             .try_extract_tensor::<f32>()
@@ -140,13 +225,13 @@ impl ChessDetection {
     /// In `DetectionLevel::Basic`, returns all filtered detections.
     /// In `DetectionLevel::Refined`, returns `Err(ChustError::BoardNotFound)` if no chessboard
     /// is detected to perform the refined secondary pass.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn detect(
         &mut self,
         img: &DynamicImage,
         detection_level: &DetectionLevel,
     ) -> Result<ArrayBase<OwnedRepr<f32>, IxDyn>> {
         let (input, x_offset, y_offset, scale) = process_image(img);
-
 
         let mut output = self.predict(input)?;
 
@@ -181,6 +266,48 @@ impl ChessDetection {
         Ok(output)
     }
 
+    /// Detects chess pieces and boards on an image (WASM async).
+    #[cfg(target_arch = "wasm32")]
+    pub async fn detect(
+        &mut self,
+        img: &DynamicImage,
+        detection_level: &DetectionLevel,
+    ) -> Result<ArrayBase<OwnedRepr<f32>, IxDyn>> {
+        let (input, x_offset, y_offset, scale) = process_image(img);
+
+        let mut output = self.predict(input).await?;
+
+        if let DetectionLevel::Refined = detection_level {
+            let best_detection = match get_best_chessboard_match(&output) {
+                Some(detection) => detection.0,
+                None => return Err(ChustError::BoardNotFound),
+            };
+
+            let (x, y, w, h) = scale_bbox(
+                best_detection[0],
+                best_detection[1],
+                best_detection[2],
+                best_detection[3],
+                x_offset as f32,
+                y_offset as f32,
+                scale,
+            );
+            let (cropped_img, new_x, new_y) =
+                crop_with_padding(img, x, y, w, h, self.refined_padding);
+
+            output = Box::pin(self.detect(&cropped_img, &DetectionLevel::Basic)).await?;
+
+            for mut row in output.axis_iter_mut(ndarray::Axis(0)) {
+                row[0] += new_x as f32;
+                row[1] += new_y as f32;
+            }
+        } else {
+            self.filter_and_process_detections(&mut output, x_offset, y_offset, scale);
+        }
+
+        Ok(output)
+    }
+
     pub fn output_to_fen(
         &self,
         output: &ArrayBase<OwnedRepr<f32>, IxDyn>,
@@ -188,7 +315,13 @@ impl ChessDetection {
         board_size: (u32, u32),
         white_pov: bool,
     ) -> String {
-        output_to_fen(output, board_cords, board_size, self.confidence_threshold, white_pov)
+        output_to_fen(
+            output,
+            board_cords,
+            board_size,
+            self.confidence_threshold,
+            white_pov,
+        )
     }
 }
 

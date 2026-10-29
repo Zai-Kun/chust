@@ -76,6 +76,12 @@ pub fn output_to_fen(
     confidence_threshold: f32,
     white_pov: bool,
 ) -> String {
-    let board = output_to_board_array(output, board_cords, board_size, confidence_threshold, white_pov);
+    let board = output_to_board_array(
+        output,
+        board_cords,
+        board_size,
+        confidence_threshold,
+        white_pov,
+    );
     board_to_fen(&board)
 }

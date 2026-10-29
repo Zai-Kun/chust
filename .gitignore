@@ -3,3 +3,4 @@
 *.exe
 stockfish
 /screenshot
+/crates/chust-wasm/pkg/

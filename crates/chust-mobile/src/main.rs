@@ -1,11 +1,14 @@
+use chust_lib::{get_best_chessboard_match, ChessDetection, DetectionLevel};
 use std::env;
 use std::time::Instant;
-use chust_lib::{ChessDetection, DetectionLevel, get_best_chessboard_match};
 
 fn main() -> anyhow::Result<()> {
     let args: Vec<String> = env::args().collect();
     let image_path = args.get(1).map(|s| s.as_str()).unwrap_or("test.png");
-    let model_path = args.get(2).map(|s| s.as_str()).unwrap_or("chess_detection.onnx");
+    let model_path = args
+        .get(2)
+        .map(|s| s.as_str())
+        .unwrap_or("chess_detection.onnx");
 
     println!("Loading image: {image_path}...");
     let img = imageproc::image::open(image_path)?;

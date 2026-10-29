@@ -4,6 +4,7 @@ members = [
     "crates/chust-lib",
     "crates/chust-cli",
     "crates/chust-mobile",
+    "crates/chust-wasm"
 ]
 
 [workspace.dependencies]
@@ -13,7 +14,7 @@ anyhow = "1.0.96"
 clap = { version = "4.5.30", features = ["derive"] }
 imageproc = "0.25.0"
 ndarray = "0.17.2"
-ort = { version = "=2.0.0-rc.13", features = ["download-binaries"] }
+ort = { version = "=2.0.0-rc.13", default-features = false }
 ab_glyph = "0.2.29"
 enigo = "0.3.0"
 xcap = "0.4.0"

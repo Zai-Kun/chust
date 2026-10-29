@@ -26,12 +26,22 @@ impl BoardLayout {
 
     /// Converts algebraic notation (e.g., "e4") to pixel coordinates (x, y) at the tile center.
     pub fn notation_to_positions(&self, notation: &str) -> Option<(u32, u32)> {
-        notation_to_positions((self.origin_x, self.origin_y), self.tile_size, notation, self.white_pov)
+        notation_to_positions(
+            (self.origin_x, self.origin_y),
+            self.tile_size,
+            notation,
+            self.white_pov,
+        )
     }
 
     /// Converts algebraic notation to pixel coordinates, returning an explicit `ChustError::InvalidNotation` on error.
     pub fn try_notation_to_positions(&self, notation: &str) -> Result<(u32, u32)> {
-        try_notation_to_positions((self.origin_x, self.origin_y), self.tile_size, notation, self.white_pov)
+        try_notation_to_positions(
+            (self.origin_x, self.origin_y),
+            self.tile_size,
+            notation,
+            self.white_pov,
+        )
     }
 
     /// Converts pixel coordinates (x, y) on the screen to algebraic square notation (e.g. "e4").

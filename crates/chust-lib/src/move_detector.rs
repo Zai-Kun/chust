@@ -8,10 +8,7 @@ pub struct SquareDiff {
 
 /// Deduces the UCI move (e.g. "e2e4", "e1g1") between two 8x8 board states.
 /// `board` array is indexed [rank_idx][file_idx] where rank 0 is 8th rank, rank 7 is 1st rank.
-pub fn deduce_move(
-    before: &[[char; 8]; 8],
-    after: &[[char; 8]; 8],
-) -> Option<String> {
+pub fn deduce_move(before: &[[char; 8]; 8], after: &[[char; 8]; 8]) -> Option<String> {
     let mut diffs: Vec<SquareDiff> = Vec::new();
 
     for r in 0..8 {
@@ -80,8 +77,12 @@ pub fn deduce_move(
 
     // En Passant: 3 squares changed (pawn moved diagonally, adjacent enemy pawn disappeared)
     if diffs.len() == 3 {
-        let from_pawn = diffs.iter().find(|d| (d.before == 'P' || d.before == 'p') && d.after == ' ');
-        let to_pawn = diffs.iter().find(|d| (d.after == 'P' || d.after == 'p') && d.before == ' ');
+        let from_pawn = diffs
+            .iter()
+            .find(|d| (d.before == 'P' || d.before == 'p') && d.after == ' ');
+        let to_pawn = diffs
+            .iter()
+            .find(|d| (d.after == 'P' || d.after == 'p') && d.before == ' ');
         if let (Some(f), Some(t)) = (from_pawn, to_pawn) {
             return Some(format!("{}{}", f.square, t.square));
         }

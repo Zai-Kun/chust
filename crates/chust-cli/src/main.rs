@@ -72,11 +72,18 @@ fn main() -> Result<()> {
 fn initialize_chess_detector(args: &Args) -> Result<ChessDetection> {
     #[cfg(feature = "embed_model")]
     {
-        Ok(ChessDetection::from_embedded(args.conf, args.refined_padding)?)
+        Ok(ChessDetection::from_embedded(
+            args.conf,
+            args.refined_padding,
+        )?)
     }
 
     #[cfg(not(feature = "embed_model"))]
     {
-        Ok(ChessDetection::from_file(&args.model_path, args.conf, args.refined_padding)?)
+        Ok(ChessDetection::from_file(
+            &args.model_path,
+            args.conf,
+            args.refined_padding,
+        )?)
     }
 }

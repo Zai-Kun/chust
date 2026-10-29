@@ -2,7 +2,7 @@ use std::num::NonZeroUsize;
 use std::os::fd::OwnedFd;
 
 use nix::fcntl::OFlag;
-use nix::sys::mman::{self, MapFlags, ProtFlags, shm_unlink};
+use nix::sys::mman::{self, shm_unlink, MapFlags, ProtFlags};
 use nix::sys::stat::Mode;
 use nix::unistd::ftruncate;
 

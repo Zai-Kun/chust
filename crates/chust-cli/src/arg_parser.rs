@@ -27,7 +27,11 @@ pub struct Args {
     pub refined_padding: f32,
 
     /// Path to the onnx model file for chessboard detection (default: "assets/models/chess_detection.onnx").
-    #[arg(global = true, long, default_value = "assets/models/chess_detection.onnx")]
+    #[arg(
+        global = true,
+        long,
+        default_value = "assets/models/chess_detection.onnx"
+    )]
     pub model_path: String,
 
     /// Enables castling for white (default: false).

@@ -10,10 +10,7 @@ pub enum ChustError {
     InferenceFailed(String),
 
     #[error("Failed to extract tensor `{name}`: {reason}")]
-    TensorExtraction {
-        name: &'static str,
-        reason: String,
-    },
+    TensorExtraction { name: &'static str, reason: String },
 
     #[error("Output tensor shape or dimension mismatch: {0}")]
     TensorShapeMismatch(String),

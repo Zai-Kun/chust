@@ -1,4 +1,6 @@
-use imageproc::image::{imageops, imageops::FilterType, DynamicImage, GenericImageView, Rgb, RgbImage};
+use imageproc::image::{
+    imageops, imageops::FilterType, DynamicImage, GenericImageView, Rgb, RgbImage,
+};
 use ndarray::{Array, ArrayBase, Ix4, OwnedRepr};
 
 /// Crops an image around a bounding box with an added percentage padding.
