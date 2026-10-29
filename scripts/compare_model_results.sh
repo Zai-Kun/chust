@@ -6,9 +6,9 @@ set -uo pipefail
 # ./compare-fens.sh IMAGE_FOLDER [CHUST_BINARY] [FP16_MODEL] [FP32_MODEL]
 
 IMAGE_DIR="${1:-}"
-CHUST_BIN="${2:-./target/release/chust}"
-FP16_MODEL="${3:-./assets/models/chess_detectionfp16.onnx}"
-FP32_MODEL="${4:-./assets/models/chess_detection.onnx}"
+CHUST_BIN="${2:-../target/release/chust}"
+FP16_MODEL="${3:-../assets/models/300.onnx}"
+FP32_MODEL="${4:-../assets/models/chess_detection.onnx}"
 
 if [[ -z "$IMAGE_DIR" || ! -d "$IMAGE_DIR" ]]; then
     echo "Usage: $0 IMAGE_FOLDER [CHUST_BINARY] [FP16_MODEL] [FP32_MODEL]"
