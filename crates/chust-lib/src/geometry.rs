@@ -42,9 +42,12 @@ pub fn scale_bbox(
 }
 
 /// Preprocesses a dynamic image for model input: letterboxes to target size and converts to normalized CHW tensor.
-pub fn process_image(img: &DynamicImage) -> (ArrayBase<OwnedRepr<f32>, Ix4>, u32, u32, f32) {
-    let (padded_img, x_offset, y_offset, scale) = letterbox_resize(img, 640);
-    let mut input = Array::zeros((1, 3, 640, 640));
+pub fn process_image(
+    img: &DynamicImage,
+    target_size: u32,
+) -> (ArrayBase<OwnedRepr<f32>, Ix4>, u32, u32, f32) {
+    let (padded_img, x_offset, y_offset, scale) = letterbox_resize(img, target_size);
+    let mut input = Array::zeros((1, 3, target_size as usize, target_size as usize));
     for (x, y, pixel) in padded_img.enumerate_pixels() {
         let Rgb([r, g, b]) = *pixel;
         input[[0, 0, y as usize, x as usize]] = (r as f32) / 255.;

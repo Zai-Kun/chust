@@ -16,14 +16,22 @@ pub enum DetectionLevel {
 
 pub struct ChessDetection {
     session: Session,
+    target_size: u32,
+
     pub confidence_threshold: f32,
     pub refined_padding: f32,
 }
 
 impl ChessDetection {
-    pub fn new(session: Session, confidence_threshold: f32, refined_padding: f32) -> Self {
+    pub fn new(
+        session: Session,
+        target_size: u32,
+        confidence_threshold: f32,
+        refined_padding: f32,
+    ) -> Self {
         Self {
             session,
+            target_size,
             confidence_threshold,
             refined_padding,
         }
@@ -43,7 +51,14 @@ impl ChessDetection {
                 ChustError::ModelLoad(format!("Failed to load ONNX model from `{}`: {}", path, e))
             })?;
 
-        Ok(Self::new(session, confidence_threshold, refined_padding))
+        let target_size = get_target_size(&session)?;
+        println!("target_size: {target_size}");
+        Ok(Self::new(
+            session,
+            target_size,
+            confidence_threshold,
+            refined_padding,
+        ))
     }
 
     /// Load model from in-memory byte slice.
@@ -67,7 +82,13 @@ impl ChessDetection {
                 ))
             })?;
 
-        Ok(Self::new(session, confidence_threshold, refined_padding))
+        let target_size = get_target_size(&session)?;
+        Ok(Self::new(
+            session,
+            target_size,
+            confidence_threshold,
+            refined_padding,
+        ))
     }
 
     /// Load model from in-memory byte slice (WASM async).
@@ -97,7 +118,13 @@ impl ChessDetection {
                 ))
             })?;
 
-        Ok(Self::new(session, confidence_threshold, refined_padding))
+        let target_size = get_target_size(&session)?;
+        Ok(Self::new(
+            session,
+            target_size,
+            confidence_threshold,
+            refined_padding,
+        ))
     }
 
     /// Load model embedded into the binary at compile time (requires `embed_model` feature).
@@ -231,7 +258,7 @@ impl ChessDetection {
         img: &DynamicImage,
         detection_level: &DetectionLevel,
     ) -> Result<ArrayBase<OwnedRepr<f32>, IxDyn>> {
-        let (input, x_offset, y_offset, scale) = process_image(img);
+        let (input, x_offset, y_offset, scale) = process_image(img, self.target_size);
 
         let mut output = self.predict(input)?;
 
@@ -342,4 +369,31 @@ pub fn get_best_chessboard_match(
     }
 
     best_detection
+}
+
+// utility functions
+fn get_target_size(session: &Session) -> Result<u32> {
+    let input = session
+        .inputs()
+        .get(0)
+        .ok_or_else(|| ChustError::ModelLoad("Model has no inputs".into()))?;
+
+    let shape = input
+        .dtype()
+        .tensor_shape()
+        .ok_or_else(|| ChustError::ModelLoad("Model has no input shape".into()))?;
+
+    if shape.len() != 4 {
+        return Err(ChustError::ModelLoad(format!(
+            "Expected a 4D input tensor, got shape: {:?}",
+            shape
+        )));
+    }
+
+    let target_size = *shape
+        .get(2)
+        .ok_or_else(|| ChustError::ModelLoad("Model input height is missing".into()))?;
+
+    u32::try_from(target_size)
+        .map_err(|_| ChustError::ModelLoad("Model input height exceeds u32 range".into()))
 }
