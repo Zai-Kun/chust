@@ -111,8 +111,12 @@ impl InputCaptureTrait for InputCaptureWayland {
         let vp = output.vp.as_ref().unwrap();
 
         vp.motion_absolute(time(), x, y, w as u32, h as u32);
+        vp.frame();
+
         vp.button(time(), LEFT_BUTTON, ButtonState::Pressed);
         vp.button(time(), LEFT_BUTTON, ButtonState::Released);
+        vp.frame();
+
         self.event_queue.roundtrip(&mut self.state)?;
 
         Ok(())

@@ -1,3 +1,5 @@
 fix the iamge format issue on hyprland (handle xrgb8888)
 add an option to delay before clicking at a possition (move-delay) (completed)
 add piece dragging motion so animations don't cause issues
+
+in play mode, do a refined search once and save the cords as to not have to do it every time.
