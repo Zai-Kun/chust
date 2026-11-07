@@ -2,6 +2,7 @@
 // scale factor is not handeled
 // trnsformations are not handeled
 // not the best error handling
+// handle multiple image formates
 
 // TODO:
 // add logging. instead of just ignoring th events, log them
@@ -10,7 +11,7 @@ use crate::input_capture::shmem;
 
 use std::os::fd::AsFd;
 
-use wayland_client::{
+use wayland_client::{WEnum,
     delegate_noop,
     protocol::{wl_buffer, wl_output, wl_registry, wl_shm, wl_shm_pool},
     Connection, Dispatch, EventQueue, QueueHandle,
@@ -30,6 +31,7 @@ pub struct Output {
     pub scale: Option<i32>,
     pub width: Option<i32>,
     pub height: Option<i32>,
+    pub transform: Option<WEnum<wl_output::Transform>>,
     pub done: bool,
 
     pub frame: Option<zwlr_screencopy_frame_v1::ZwlrScreencopyFrameV1>,
@@ -51,6 +53,7 @@ impl Output {
             scale: None,
             width: None,
             height: None,
+            transform: None,
             done: false,
 
             frame: None,
@@ -237,6 +240,7 @@ impl Dispatch<wl_output::WlOutput, usize> for State {
             wl_output::Event::Description { description } => {
                 output.description = Some(description.to_string())
             }
+            wl_output::Event::Geometry { transform, .. } => output.transform = Some(transform),
             wl_output::Event::Done => output.done = true,
             _ => {}
         }
