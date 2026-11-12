@@ -1,4 +1,4 @@
-use crate::arg_parser::{Args, Pov};
+use crate::arg_parser::{Args, ProcessArgs, Pov};
 use anyhow::{Context, Result};
 use chust_lib::{annotate_detections, get_best_chessboard_match, ChessDetection, DetectionLevel};
 use imageproc::image::{self, DynamicImage};
@@ -6,17 +6,11 @@ use ndarray::{ArrayBase, IxDyn, OwnedRepr};
 use std::io::{self, Cursor, Read, Write};
 
 pub fn process(
-    image_path: &str,
-    no_fen: bool,
-    print_detections: bool,
-    best_chessboard_detection_only: bool,
-    output_path: Option<String>,
-    dont_exit: bool,
-
+    cmd: &ProcessArgs,
     args: &Args,
     chess_detector: &mut ChessDetection,
 ) -> Result<()> {
-    if no_fen && output_path.is_none() && !print_detections {
+    if cmd.no_fen && cmd.output_path.is_none() && !cmd.print_detections {
         return Err(anyhow::anyhow!("No output requested."));
     }
 
@@ -30,10 +24,10 @@ pub fn process(
     };
 
     loop {
-        let (is_white_pov, mut image) = if image_path != "-" {
+        let (is_white_pov, mut image) = if cmd.image_path != "-" {
             (
                 args.pov == Pov::W,
-                image::open(image_path).context(format!("Failed to load image {}", image_path))?,
+                image::open(&cmd.image_path).context(format!("Failed to load image {}", cmd.image_path))?,
             )
         } else {
             read_image_from_stdin(&mut handle)?
@@ -48,17 +42,17 @@ pub fn process(
             args,
             &detections,
             is_white_pov,
-            no_fen,
-            print_detections,
-            best_chessboard_detection_only,
+            cmd.no_fen,
+            cmd.print_detections,
+            cmd.best_chessboard_detection_only,
         )?;
 
-        if let Some(output_path) = output_path.as_ref() {
+        if let Some(output_path) = cmd.output_path.as_ref() {
             annotate_detections(&mut image, &detections, &*detection_filter);
             save_image(&image, output_path)?;
         }
 
-        if image_path != "-" || !dont_exit {
+        if cmd.image_path != "-" || !cmd.dont_exit {
             break;
         }
     }

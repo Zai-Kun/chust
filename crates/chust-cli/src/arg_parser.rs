@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Args as ClapArgs, Parser, Subcommand, ValueEnum};
 
 /// A tool for processing an image and extracting chessboards, and pieces locations.
 /// It can also play the game for you.
@@ -52,84 +52,90 @@ pub enum Pov {
     B,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum Commands {
     /// Process an image file and print the detections and fen.
-    Process {
-        /// Path to the image file, or "-" to read from stdin.
-        /// When reading from standard input, the first byte specifies the point of view (POV), the next 4 bytes indicate the image size, and the remaining bytes are the image data.
-        image_path: String,
-
-        /// Don't attempt to extract FEN notation from the best chessboard detection (default: false).
-        #[arg(long, default_value_t = false)]
-        no_fen: bool,
-
-        /// Print the coordinates (x, y, width, height) of the detections.
-        /// If --best-chessboard-detection-only is enabled, only the detections used for FEN extraction are printed.
-        #[arg(long, default_value_t = false)]
-        print_detections: bool,
-
-        /// Print only the best chessboard detection and its associated pieces for FEN extraction.
-        /// This flag is ignored if --no-fen is true (default: false).
-        #[arg(long, default_value_t = false)]
-        best_chessboard_detection_only: bool,
-
-        /// If specified, the tool will annotate the original image with all detections and save it at the given path. You can also give it "-" to write to the output pipe.
-        #[arg(long)]
-        output_path: Option<String>,
-
-        /// Do not exit after processing an image; continuously wait for additional images from the input pipe.
-        /// This option is ignored if a file path is not "-" (default: false).
-        #[arg(long, default_value_t = false)]
-        dont_exit: bool,
-    },
+    Process(ProcessArgs),
 
     /// Play a game of chess for you as a bot.
-    Play {
-        /// Defines the command to capture a screenshot and pipe image data to stdout for Chust to process.
-        /// The image must be in a format supported by the "image" crate.
-        /// Default: `xcap` for Windows, Linux (X11), macOS, and `wlr-screencopy-unstable-v1` for Wayland (via wayland-client).
-        #[arg(long)]
-        screenshot_command: Option<String>,
+    Play(PlayArgs),
+}
 
-        /// Specifies a command to simulate a mouse click at given coordinates.
-        /// Use `{x}` and `{y}` as placeholders, which Chust replaces with actual coordinates before execution.
-        /// Default: `enigo` for Windows, Linux (X11), macOS, and `wlr-virtual-pointer-unstable-v1` for Wayland.
-        ///
-        /// Example: "some_tool click {x}, {y}"
-        #[arg(long)]
-        click_command: Option<String>,
+#[derive(ClapArgs, Debug, Clone)]
+pub struct ProcessArgs {
+    /// Path to the image file, or "-" to read from stdin.
+    /// When reading from standard input, the first byte specifies the point of view (POV), the next 4 bytes indicate the image size, and the remaining bytes are the image data.
+    pub image_path: String,
 
-        /// Sets the delay (in seconds) before capturing another screenshot. (default: 0.5 seconds).
-        #[arg(long, default_value_t = 0.5)]
-        screenshot_delay: f32,
+    /// Don't attempt to extract FEN notation from the best chessboard detection (default: false).
+    #[arg(long, default_value_t = false)]
+    pub no_fen: bool,
 
-        /// Path to the Stockfish binary.
-        /// Default: "stockfish" (Linux/macOS) or "stockfish.exe" (Windows).
-        #[arg(long, default_value = default_stockfish_path())]
-        stockfish_path: String,
+    /// Print the coordinates (x, y, width, height) of the detections.
+    /// If --best-chessboard-detection-only is enabled, only the detections used for FEN extraction are printed.
+    #[arg(long, default_value_t = false)]
+    pub print_detections: bool,
 
-        /// Depth for Stockfish analysis. Higher values improve move quality but increase computation time.
-        /// Default: 10.
-        #[arg(long, default_value_t = 10)]
-        stockfish_depth: u32,
+    /// Print only the best chessboard detection and its associated pieces for FEN extraction.
+    /// This flag is ignored if --no-fen is true (default: false).
+    #[arg(long, default_value_t = false)]
+    pub best_chessboard_detection_only: bool,
 
-        /// Ensures board stability before confirming a move by rechecking after detecting a change.
-        /// When a new position is detected, we wait briefly and verify that the board state remains consistent
-        /// before proceeding. This helps prevent false positives caused by animations, lag, or partial updates.
-        ///
-        /// If disabled, Chust may react more quickly but at the risk of misinterpreting temporary visual changes.
-        ///
-        /// Default: false.
-        #[arg(long, default_value_t = false)]
-        recheck_after_change: bool,
+    /// If specified, the tool will annotate the original image with all detections and save it at the given path. You can also give it "-" to write to the output pipe.
+    #[arg(long)]
+    pub output_path: Option<String>,
 
-        /// Specifies the delay (in seconds) between selecting a piece and clicking its destination.
-        /// This simulates a more human-like interaction with the board.
-        /// Default: 0.1 seconds.
-        #[arg(long, default_value_t = 0.1)]
-        move_delay: f32,
-    },
+    /// Do not exit after processing an image; continuously wait for additional images from the input pipe.
+    /// This option is ignored if a file path is not "-" (default: false).
+    #[arg(long, default_value_t = false)]
+    pub dont_exit: bool,
+}
+
+#[derive(ClapArgs, Debug, Clone)]
+pub struct PlayArgs {
+    /// Defines the command to capture a screenshot and pipe image data to stdout for Chust to process.
+    /// The image must be in a format supported by the "image" crate.
+    /// Default: `xcap` for Windows, Linux (X11), macOS, and `wlr-screencopy-unstable-v1` for Wayland (via wayland-client).
+    #[arg(long)]
+    pub screenshot_command: Option<String>,
+
+    /// Specifies a command to simulate a mouse click at given coordinates.
+    /// Use `{x}` and `{y}` as placeholders, which Chust replaces with actual coordinates before execution.
+    /// Default: `enigo` for Windows, Linux (X11), macOS, and `wlr-virtual-pointer-unstable-v1` for Wayland.
+    ///
+    /// Example: "some_tool click {x}, {y}"
+    #[arg(long)]
+    pub click_command: Option<String>,
+
+    /// Sets the delay (in seconds) before capturing another screenshot. (default: 0.5 seconds).
+    #[arg(long, default_value_t = 0.5)]
+    pub screenshot_delay: f32,
+
+    /// Path to the Stockfish binary.
+    /// Default: "stockfish" (Linux/macOS) or "stockfish.exe" (Windows).
+    #[arg(long, default_value = default_stockfish_path())]
+    pub stockfish_path: String,
+
+    /// Depth for Stockfish analysis. Higher values improve move quality but increase computation time.
+    /// Default: 10.
+    #[arg(long, default_value_t = 10)]
+    pub stockfish_depth: u32,
+
+    /// Ensures board stability before confirming a move by rechecking after detecting a change.
+    /// When a new position is detected, we wait briefly and verify that the board state remains consistent
+    /// before proceeding. This helps prevent false positives caused by animations, lag, or partial updates.
+    ///
+    /// If disabled, Chust may react more quickly but at the risk of misinterpreting temporary visual changes.
+    ///
+    /// Default: false.
+    #[arg(long, default_value_t = false)]
+    pub recheck_after_change: bool,
+
+    /// Specifies the delay (in seconds) between selecting a piece and clicking its destination.
+    /// This simulates a more human-like interaction with the board.
+    /// Default: 0.1 seconds.
+    #[arg(long, default_value_t = 0.1)]
+    pub move_delay: f32,
 }
 
 fn default_stockfish_path() -> &'static str {

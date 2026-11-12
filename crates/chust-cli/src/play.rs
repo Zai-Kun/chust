@@ -1,25 +1,28 @@
-use crate::{arg_parser::Args, input_capture::InputCaptureTrait, stockfish::Stockfish};
+use crate::{
+    arg_parser::{Args, PlayArgs, Pov},
+    input_capture::{input_capture_manager::create_input_capture, InputCaptureTrait},
+    stockfish::Stockfish,
+};
 use anyhow::{Context, Result};
 use chust_lib::{get_best_chessboard_match, notation_to_positions, ChessDetection, DetectionLevel};
 use ndarray::{ArrayBase, IxDyn, OwnedRepr};
 use std::io::{self, Read};
 
 pub fn play(
-    screenshot_delay: f32,
-    stockfish_depth: u32,
-    mut stockfish: Stockfish,
-    recheck_after_change: bool,
-    move_delay: f32,
+    cmd: &PlayArgs,
     args: &Args,
     chess_detector: &mut ChessDetection,
-    mut input_capture: Box<dyn InputCaptureTrait>,
 ) -> Result<()> {
+    let mut input_capture =
+        create_input_capture(0, cmd.click_command.clone(), cmd.screenshot_command.clone())?;
+    let mut stockfish = Stockfish::new(&cmd.stockfish_path)?;
+
     let detection_level = if args.refined_search {
         DetectionLevel::Refined
     } else {
         DetectionLevel::Basic
     };
-    let is_white_pov = args.pov == crate::arg_parser::Pov::W;
+    let is_white_pov = args.pov == Pov::W;
 
     let mut current_fen = "".to_string();
     loop {
@@ -29,8 +32,8 @@ pub fn play(
             is_white_pov,
             &mut input_capture,
             chess_detector,
-            screenshot_delay,
-            recheck_after_change,
+            cmd.screenshot_delay,
+            cmd.recheck_after_change,
         )?;
         current_fen = _current_fen;
 
@@ -54,7 +57,7 @@ pub fn play(
             castling
         );
 
-        let best_move = stockfish.get_best_move(&fen, stockfish_depth)?;
+        let best_move = stockfish.get_best_move(&fen, cmd.stockfish_depth)?;
 
         click_notation(
             board_cords,
@@ -63,7 +66,7 @@ pub fn play(
             is_white_pov,
             &mut input_capture,
         )?;
-        std::thread::sleep(std::time::Duration::from_secs_f32(move_delay));
+        std::thread::sleep(std::time::Duration::from_secs_f32(cmd.move_delay));
         click_notation(
             board_cords,
             tile_size,
